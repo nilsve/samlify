@@ -202,48 +202,42 @@ var Entity = /** @class */ (function () {
                         else {
                             throw new Error('Invalid type in genericParser');
                         }
-                        if (!(binding === bindDict.redirect && supportBindings.indexOf(nsBinding[binding]) !== -1)) return [3 /*break*/, 3];
-                        reqQuery = query;
-                        samlContent = reqQuery[libsaml_1.default.getQueryParamByType(parserType)];
-                        if (samlContent === undefined) {
-                            throw new Error('bad request');
-                        }
-                        xmlString = utility_1.inflateString(decodeURIComponent(samlContent));
-                        if (!(parserType === 'SAMLResponse')) return [3 /*break*/, 2];
-                        return [4 /*yield*/, libsaml_1.default.isValidXml(xmlString)];
-                    case 1:
-                        _c.sent();
-                        _c.label = 2;
-                    case 2:
-                        if (checkSignature) {
-                            sigAlg = reqQuery.SigAlg, signature = reqQuery.Signature;
-                            if (signature && sigAlg) {
-                                if (libsaml_1.default.verifyMessageSignature(targetEntityMetadata, octetString, new Buffer(decodeURIComponent(signature), 'base64'), sigAlg)) {
-                                    parseResult = {
-                                        samlContent: xmlString,
-                                        sigAlg: decodeURIComponent(sigAlg),
-                                        extract: libsaml_1.default.extractor(xmlString, fields),
-                                    };
+                        if (binding === bindDict.redirect && supportBindings.indexOf(nsBinding[binding]) !== -1) {
+                            reqQuery = query;
+                            samlContent = reqQuery[libsaml_1.default.getQueryParamByType(parserType)];
+                            if (samlContent === undefined) {
+                                throw new Error('bad request');
+                            }
+                            xmlString = utility_1.inflateString(decodeURIComponent(samlContent));
+                            if (checkSignature) {
+                                sigAlg = reqQuery.SigAlg, signature = reqQuery.Signature;
+                                if (signature && sigAlg) {
+                                    if (libsaml_1.default.verifyMessageSignature(targetEntityMetadata, octetString, new Buffer(decodeURIComponent(signature), 'base64'), sigAlg)) {
+                                        parseResult = {
+                                            samlContent: xmlString,
+                                            sigAlg: decodeURIComponent(sigAlg),
+                                            extract: libsaml_1.default.extractor(xmlString, fields),
+                                        };
+                                    }
+                                    else {
+                                        // Fail to verify message signature
+                                        throw new Error('fail to verify message signature in request');
+                                    }
                                 }
                                 else {
-                                    // Fail to verify message signature
-                                    throw new Error('fail to verify message signature in request');
+                                    // Missing signature or signature algorithm
+                                    throw new Error('missing signature or signature algorithm');
                                 }
                             }
                             else {
-                                // Missing signature or signature algorithm
-                                throw new Error('missing signature or signature algorithm');
+                                parseResult = {
+                                    samlContent: xmlString,
+                                    extract: libsaml_1.default.extractor(xmlString, fields),
+                                };
                             }
+                            return [2 /*return*/, parseResult];
                         }
-                        else {
-                            parseResult = {
-                                samlContent: xmlString,
-                                extract: libsaml_1.default.extractor(xmlString, fields),
-                            };
-                        }
-                        return [2 /*return*/, parseResult];
-                    case 3:
-                        if (!(binding === bindDict.post && supportBindings.indexOf(nsBinding[binding]) !== -1)) return [3 /*break*/, 8];
+                        if (!(binding === bindDict.post && supportBindings.indexOf(nsBinding[binding]) !== -1)) return [3 /*break*/, 3];
                         encodedRequest = body[libsaml_1.default.getQueryParamByType(parserType)];
                         res = String(utility_1.base64Decode(encodedRequest));
                         issuer = targetEntityMetadata.getEntityID();
@@ -257,18 +251,12 @@ var Entity = /** @class */ (function () {
                                 throw new Error('incorrect signature');
                             }
                         }
-                        if (!(parserType === 'SAMLResponse' && from.entitySetting.isAssertionEncrypted)) return [3 /*break*/, 5];
+                        if (!(parserType === 'SAMLResponse' && from.entitySetting.isAssertionEncrypted)) return [3 /*break*/, 2];
                         return [4 /*yield*/, libsaml_1.default.decryptAssertion(here, res)];
-                    case 4:
+                    case 1:
                         res = _c.sent();
-                        _c.label = 5;
-                    case 5:
-                        if (!(parserType === 'SAMLResponse')) return [3 /*break*/, 7];
-                        return [4 /*yield*/, libsaml_1.default.isValidXml(res)];
-                    case 6:
-                        _c.sent();
-                        _c.label = 7;
-                    case 7:
+                        _c.label = 2;
+                    case 2:
                         parseResult = {
                             samlContent: res,
                             extract: libsaml_1.default.extractor(res, fields),
@@ -286,7 +274,7 @@ var Entity = /** @class */ (function () {
                             throw new Error('incorrect issuer');
                         }
                         return [2 /*return*/, parseResult];
-                    case 8: 
+                    case 3: 
                     // Will support artifact in the next release
                     throw new Error('this binding is not supported');
                 }
